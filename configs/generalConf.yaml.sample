@@ -1,0 +1,17 @@
+app:
+  masterKey: 8c0a0818-db51-46c5-a324-8a6194352e70
+  jwt:
+    secret: 4029517d-7f43-4061-a1f2-95be14b590b1
+    lifetime: 86400000000000 # 24hr = 24 * 60 * 60 * 10^9
+  api:
+    port: 8905
+    prefix: /hito
+
+mongo:
+  url: mongodb://root:89166910@127.0.0.1:27017
+  # url: mongodb://root:50984672@hmx-test.hixcare.tw:27017
+  dbName: hito
+
+logrus:
+  level: 3
+  # 0: Panic, 1: Fatal, 2: Error, 3: Warn, 4: Info, 5: Debug, 6: Trace
