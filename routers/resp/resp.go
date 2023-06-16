@@ -25,6 +25,11 @@ type Error struct {
 	Message        string
 }
 
+func (apiError Error) AppendMsg(msg string) Error {
+	apiError.Message = apiError.Message + " -- " + msg
+	return apiError
+}
+
 func (apiError Error) Error() string {
 	return apiError.Message
 }

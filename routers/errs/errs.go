@@ -11,8 +11,11 @@ import (
  * The first code is function code, the second code is error code.
  */
 var (
-	InternalError = resp.Error{http.StatusInternalServerError, resp.System.String() + "0001", "Internal Error"}
-	InvalidToken  = resp.Error{http.StatusUnauthorized, resp.System.String() + "0010", "Invalid token"}
+	InternalError    = resp.Error{http.StatusInternalServerError, resp.System.String() + "0001", "Internal Error"}
+	InvalidToken     = resp.Error{http.StatusUnauthorized, resp.System.String() + "0010", "Invalid token"}
+	InvalidParams    = resp.Error{http.StatusBadRequest, resp.System.String() + "0011", "Invalid parameters"}
+	CanNotCreateUser = resp.Error{http.StatusBadRequest, resp.System.String() + "0012", "Can not create user"}
+	CanNotLogin      = resp.Error{http.StatusBadRequest, resp.System.String() + "0013", "Invalid id or password"}
 
 // InvalidParams                  = resp.Error{http.StatusBadRequest, resp.HMX.String() + "0011", "Invalid parameters"}
 // CanNotAssignDataToModel        = resp.Error{http.StatusBadRequest, resp.HMX.String() + "0012", "Can not assign data to model"}
