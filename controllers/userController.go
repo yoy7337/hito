@@ -70,11 +70,10 @@ type LoginOpts struct {
 	Password string `json:"password" binding:"required" example:"123456"`
 }
 
-func (opts *LoginOpts) Login(result *models.User) error {
+func (opts *LoginOpts) Login(user *models.User) error {
 	// check if user exists
-	var user models.User
 	findOpts := models.FindOpts{
-		Decode: &user,
+		Decode: user,
 	}
 
 	filter := bson.M{}

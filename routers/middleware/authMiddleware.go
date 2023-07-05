@@ -1,17 +1,25 @@
 package middleware
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"hito/configs"
+	"hito/models"
+	"hito/routers/errs"
+	"hito/routers/resp"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Claims struct {
 	jwt.StandardClaims
-	UserId       string
-	PasswordHash string
+	UserOId      string
+	PasswordSalt string
 }
 
 var jwtKey string
@@ -22,49 +30,94 @@ func init() {
 	jwtLifetime = configs.GeneralConf.GetDuration("app.jwt.lifetime")
 }
 
-// func AuthJWT(c *gin.Context) {
-// 	auth := c.GetHeader("Authorization")
-// 	splits := strings.Split(auth, "Bearer ")
-// 	if len(splits) < 2 {
-// 		resp.Err(c, errs.InvalidToken)
-// 		c.Abort()
-// 		return
-// 	}
+func AuthJWT(c *gin.Context) {
+	auth := c.GetHeader("Authorization")
+	splits := strings.Split(auth, "Bearer ")
+	if len(splits) < 2 {
+		resp.Err(c, errs.InvalidToken)
+		c.Abort()
+		return
+	}
 
-// 	token := splits[1]
-// 	user := validToken(token)
-// 	if user == nil {
-// 		resp.Err(c, errs.InvalidToken)
-// 		c.Abort()
-// 		return
-// 	}
+	token := splits[1]
+	user := validJWTToken(token)
+	if user == nil {
+		resp.Err(c, errs.InvalidToken)
+		c.Abort()
+		return
+	}
 
-// 	accountInfo, err := controllers.GetAccountInfo(user)
-// 	if err == nil {
-// 		account.SetAccountInfo(c, accountInfo)
-// 	}
+	log.Debugf("user auth: %v", user)
 
-// 	setUser(c, user)
-// 	setSessionToken(c, token)
+	// accountInfo, err := controllers.GetAccountInfo(user)
+	// if err == nil {
+	// 	account.SetAccountInfo(c, accountInfo)
+	// }
 
-// 	c.Next()
-// }
+	// setUser(c, user)
+	// setSessionToken(c, token)
 
-// func CreateToken(user *models.HmxUser) (string, error) {
-// 	claims := Claims{
-// 		StandardClaims: jwt.StandardClaims{
-// 			ExpiresAt: time.Now().Add(jwtLifetime).Unix(),
-// 		},
-// 		UserId:       user.UserId,
-// 		PasswordHash: user.PasswordHash,
-// 	}
+	c.Next()
+}
 
-// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+func CreateJWTToken(user *models.User) (string, error) {
+	claims := Claims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(jwtLifetime).Unix(),
+			Id:        user.Id,
+		},
+		UserOId:      user.ID.Hex(),
+		PasswordSalt: user.PasswordSalt,
+	}
 
-// 	return token.SignedString([]byte(jwtKey))
-// }
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-// func validToken(tokenString string) *models.HmxUser {
+	return token.SignedString([]byte(jwtKey))
+}
+
+func validJWTToken(tokenString string) *models.User {
+	claims := &Claims{}
+
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		// check signing method
+		if method, ok := token.Method.(*jwt.SigningMethodHMAC); !ok || method != jwt.SigningMethodHS256 {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte(jwtKey), nil
+	})
+
+	// can not validate token...
+	if err != nil || !token.Valid {
+		log.Warn("invalid token")
+		return nil
+	}
+
+	oId, err := primitive.ObjectIDFromHex(claims.UserOId)
+	if err != nil {
+		return nil
+	}
+
+	var user models.User
+	opts := models.FindOpts{
+		Decode: &user,
+	}
+
+	if err := opts.FindOneByOId(user.ModelName(), &oId); err != nil {
+		log.Warn("user not found")
+		return nil
+	}
+
+	// check password salt, passwordSalt will be changed when user change password
+	if user.PasswordSalt != claims.PasswordSalt {
+		log.Warn("password salt changed")
+		return nil
+	}
+
+	return &user
+}
+
+// TODO: login with long-session
 // 	session, err := models.GetSession(tokenString)
 
 // 	// can not parse token...

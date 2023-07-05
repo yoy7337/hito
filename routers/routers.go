@@ -24,8 +24,9 @@ func InitRouters() *gin.Engine {
 	initValidator()
 
 	publicV1R := router.Group(configs.GeneralConf.GetString("app.api.prefix")).Group("/v1")
-
 	privateV1R := router.Group(configs.GeneralConf.GetString("app.api.prefix")).Group("/v1")
+	privateV1R.Use(middleware.AuthJWT)
+
 	v1.MountUserApis(publicV1R.Group("/user"), privateV1R.Group("/user"))
 
 	return router

@@ -8,6 +8,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -21,6 +22,15 @@ type FindOpts struct {
 	Skip   *int64
 	Sort   interface{} // ex: {a: 1, b: -1}
 	Decode interface{}
+}
+
+func (opts *FindOpts) FindOneByOId(collectionName string, oId *primitive.ObjectID) error {
+	filter := bson.M{}
+	if err := utils.AppendEqualTo(&filter, "_id", oId); err != nil {
+		return err
+	}
+
+	return opts.FindOne(collectionName, filter)
 }
 
 func (opts *FindOpts) FindOne(collectionName string, filter interface{}) error {
