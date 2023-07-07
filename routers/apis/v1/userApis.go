@@ -18,7 +18,9 @@ type TokenResp struct {
 func MountUserApis(publicR *gin.RouterGroup, privateR *gin.RouterGroup) {
 	publicR.POST("/login", login)
 	publicR.POST("/signup", signUp)
+
 	privateR.GET("/tap", tap)
+	privateR.POST("/changePassword", changePass)
 }
 
 // @Summary 登入
@@ -85,5 +87,28 @@ func signUp(c *gin.Context) {
 // @Success 200 object interface{}
 // @Router /user/tap [get]
 func tap(c *gin.Context) {
+	resp.JSON(c, gin.H{"msg": "ok"})
+}
+
+// @Summary 修改密碼
+// @Tags User 使用者
+// @version 1.0
+// @Accept       json
+// @Produce      json
+// @Success 200 object interface{}
+// @Router /user/changePassword [post]
+func changePass(c *gin.Context) {
+	var opts controllers.ChangePassOpts
+	if err := c.ShouldBindJSON(&opts); err != nil {
+		c.Error(errs.InternalError.AppendMsg(err.Error()))
+		return
+	}
+
+	user := middleware.GetUser(c)
+	if err := opts.ChangePass(user); err != nil {
+		c.Error(errs.Msg(errs.CanNotChangePassword, err.Error()))
+		return
+	}
+
 	resp.JSON(c, gin.H{"msg": "ok"})
 }

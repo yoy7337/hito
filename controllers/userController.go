@@ -91,3 +91,32 @@ func (opts *LoginOpts) Login(user *models.User) error {
 
 	return nil
 }
+
+type ChangePassOpts struct {
+	OldPass string `json:"oldPass" binding:"required" example:"123456"`
+	NewPass string `json:"newPass" binding:"required" example:"1234567"`
+}
+
+func (opts *ChangePassOpts) ChangePass(user *models.User) error {
+	if user == nil || user.Authentication(opts.OldPass) == false {
+		return errors.New("authentication failed")
+	}
+
+	if err := user.SetPassword(opts.NewPass); err != nil {
+		return err
+	}
+
+	updateData := &models.User{
+		PasswordSalt: user.PasswordSalt,
+		PasswordHash: user.PasswordHash,
+	}
+
+	//ame := updateData.ModelName()
+
+	updateOpts := models.UpdateOpts{
+		OId:  user.ID,
+		Data: updateData,
+	}
+
+	return updateOpts.UpdateOne("users")
+}

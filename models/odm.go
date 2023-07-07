@@ -136,3 +136,22 @@ func (opts *InsertOpts) InsertOne(collName string) error {
 
 	return err
 }
+
+type UpdateOpts struct {
+	OId      *primitive.ObjectID
+	Data     Model
+	UpdateBy *User
+}
+
+func (opts *UpdateOpts) UpdateOne(collName string) error {
+
+	coll := MongoClient.Database(DbName).Collection(opts.Data.ModelName())
+	c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if _, err := coll.UpdateOne(c, bson.D{{"_id", opts.OId}}, bson.D{{"$set", opts.Data}}); err != nil {
+		return err
+	}
+
+	return nil
+}

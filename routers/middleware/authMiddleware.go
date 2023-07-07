@@ -54,7 +54,7 @@ func AuthJWT(c *gin.Context) {
 	// 	account.SetAccountInfo(c, accountInfo)
 	// }
 
-	// setUser(c, user)
+	setUser(c, user)
 	// setSessionToken(c, token)
 
 	c.Next()
@@ -133,21 +133,21 @@ func validJWTToken(tokenString string) *models.User {
 // 	return user
 // }
 
-// func setUser(c *gin.Context, user *models.HmxUser) {
-// 	if user != nil {
-// 		c.Set("user", user)
-// 	}
-// }
+func setUser(c *gin.Context, user *models.User) {
+	if user != nil {
+		c.Set("user", user)
+	}
+}
 
-// func GetUser(c *gin.Context) *models.HmxUser {
-// 	user, exists := c.Get("user")
+func GetUser(c *gin.Context) *models.User {
+	user, exists := c.Get("user")
 
-// 	if !exists {
-// 		return nil
-// 	}
+	if !exists {
+		return nil
+	}
 
-// 	return user.(*models.HmxUser)
-// }
+	return user.(*models.User)
+}
 
 // func setSessionToken(c *gin.Context, token string) {
 // 	c.Set("sessionToken", token)
